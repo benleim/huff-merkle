@@ -15,8 +15,8 @@
 
 #define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
     // Load value from storage.
-    [MERKLE_ROOT_SLOT]       // [ptr]
-    sload               // [value]
+    [MERKLE_ROOT_SLOT]          // [ptr]
+    sload                       // [value]
 
     // Store value in memory.
     0x00 mstore
@@ -37,7 +37,30 @@
 #define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
     0x04                        // [0x04]
-    calldataload                // [value]
+    calldataload                // [arg0]
+
+    // index / 256
+    0x100 dup2 div              // [index, arg0]
+
+    // Generate mapping key
+    0x00 mstore                 // [arg0]
+    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
+    0x40 0x00 sha3              // [key(claimed[index]), arg0]
+    
+    // Load mapping key
+    sload                       // [claimed[index], arg0]
+
+    // index % 256                 [claimed[index], arg0]
+    0x1 0x100 dup5 mod shl      // [mask, claimed[index], arg0]
+    dup2 and                    // [masked, claimed[index], arg0]
+    eq                          // [isEqual, arg0]
+
+    // store result in memory
+    0x0 mstore                  // [arg0]
+
+    // Cleanup
+    pop
+    0x20 0x00 return            // []
 }
 
 #define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
@@ -48,16 +71,16 @@
     // index / 256
     0x100 dup2 div              // [index, arg0]
 
-    // Lookup
+    // Generate mapping key
     0x00 mstore                 // [arg0]
     [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
     0x40 0x00 sha3              // [key(claimed[index]), arg0]
     
-    // Load
+    // Load mapping key
     dup1 sload                  // [claimed[index], key(claimed[index]), arg0]
 
     // index % 256                 [claimed[index], key(claimed[index]), arg0]
-    0x1 0x100 dup5 mod shl      // [shift, claimed[index], key(claimed[index]), arg0]
+    0x1 0x100 dup5 mod shl      // [mask, claimed[index], key(claimed[index]), arg0]
     or                          // [masked, key(claimed[to]), arg0]
 
     // Update
