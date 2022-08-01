@@ -51,15 +51,15 @@
     sload                       // [claimed[index], arg0]
 
     // index % 256                 [claimed[index], arg0]
-    0x1 0x100 dup5 mod shl      // [mask, claimed[index], arg0]
-    dup2 and                    // [masked, claimed[index], arg0]
-    eq                          // [isEqual, arg0]
+    0x1 0x100 dup4 mod shl      // [mask, claimed[index], arg0]
+    dup1 swap2 dup2 and         // [masked, mask, claimed[index], arg0]
+    eq                          // [isEqual, claimed[index], arg0]
 
     // store result in memory
-    0x0 mstore                  // [arg0]
+    0x0 mstore                  // [claimed[index], arg0]
 
     // Cleanup
-    pop
+    pop pop
     0x20 0x00 return            // []
 }
 

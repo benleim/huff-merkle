@@ -31,8 +31,11 @@ contract SimpleStoreTest is Test {
 
     /// @dev Ensure constructor works properly
     function testSetClaimed() public {
-        merkleDistributor.setClaimed(256);
-        console.log(merkleDistributor.isClaimed(256));
+        for (uint i; i < 1_000; i++) {
+            assert(!merkleDistributor.isClaimed(i));
+            merkleDistributor.setClaimed(i);
+            assert(merkleDistributor.isClaimed(i));
+        }
     }
 }
 
