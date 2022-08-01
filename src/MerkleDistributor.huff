@@ -33,31 +33,37 @@
     0x20 0x00 return
 }
 
-#define macro IS_CLAIMED = takes (0) returns (0) {
+#define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
     0x04                        // [0x04]
     calldataload                // [value]
 }
 
-#define macro __UTIL_SET_CLAIMED = takes (0) returns (0) {
+#define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
     0x04                        // [0x04]
     calldataload                // [arg0]
 
     // index / 256
-    0x100 dup2 div              // [arg0 / 256, arg0]
-
-    // index % 256
-    0x100 dup3 mod              // [arg0 % 256, arg0 / 256, arg0]          
+    0x100 dup2 div              // [index, arg0]
 
     // Lookup
-    dup1 0x00 mstore            // [arg0]
+    0x00 mstore                 // [arg0]
     [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
-    0x40 0x00 sha3              // [key(claimed[arg0]), arg0]
+    0x40 0x00 sha3              // [key(claimed[index]), arg0]
     
-    // stack state: [key(claimed[to]), arg0]
-    dup1 sload                  // [claimed[to], key(claimed[to]), arg0]
+    // Load
+    dup1 sload                  // [claimed[index], key(claimed[index]), arg0]
 
+    // index % 256                 [claimed[index], key(claimed[index]), arg0]
+    0x1 0x100 dup5 mod shl      // [shift, claimed[index], key(claimed[index]), arg0]
+    or                          // [masked, key(claimed[to]), arg0]
+
+    // Update
+    swap1 sstore                // [arg0]
+
+    // Pop
+    pop                         // []
 }
 
 /* Constructor */
@@ -71,7 +77,7 @@
 
     // Store the first argument in storage
     0x00 mload                  // [arg1]
-    [TOKEN_ADDR]                // [TOKEN_ADDR, arg1]
+    [TOKEN_ADDR_SLOT]           // [TOKEN_ADDR, arg1]
     sstore                      // []
 
     // Copy the second argument into memory
@@ -82,7 +88,7 @@
 
     // Store the second argument in storage
     0x00 mload                  // [arg2]
-    [MERKLE_ROOT]               // [CONSTRUCTOR_ARG_TWO, arg2]
+    [MERKLE_ROOT_SLOT]          // [CONSTRUCTOR_ARG_TWO, arg2]
     sstore                      // []
 }
 
