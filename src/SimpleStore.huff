@@ -2,8 +2,14 @@
 #define function setValue(uint256) nonpayable returns ()
 #define function getValue() view returns (uint256)
 
+#define function isClaimed(uint256) view returns (bool)
+
+
 /* Storage Slots */
 #define constant VALUE_LOCATION = FREE_STORAGE_POINTER()
+
+#define constant MERKLE_ROOT = FREE_STORAGE_POINTER()
+#define constant TOKEN_ADDR = FREE_STORAGE_POINTER()
 
 /* Methods */
 #define macro SET_VALUE() = takes (0) returns (0) {
@@ -22,6 +28,18 @@
 
     // Return value
     0x20 0x00 return
+}
+
+/* Reserved Macros */
+// constructor (address, merkleRoot)
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    0x04 calldataload       // load first 32 bytes onto the stack - merkle_root value
+    [MERKLE_ROOT]           // [addr, value]
+    sstore                  // []
+    
+    0x24 calldataload       // load second 32 bytes onto the stack
+    [TOKEN_ADDR]            // [addr, value]
+    sstore                  // []
 }
 
 #define macro MAIN() = takes (0) returns (0) {
