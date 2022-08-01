@@ -28,9 +28,15 @@ contract SimpleStoreTest is Test {
     function test() public {
         console.log("Test1");
     }
+
+    /// @dev Ensure constructor works properly
+    function testSetClaimed() public {
+        merkleDistributor.setClaimed(1);
+    }
 }
 
 interface MerkleDistributor {
     function getMerkleRoot() external view returns (bytes32);
     function getTokenAddress() external view returns (address);
+    function setClaimed(uint256) external;
 }
