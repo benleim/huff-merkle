@@ -1,0 +1,73 @@
+/* Interface */
+#define function setValue(uint256) nonpayable returns ()
+#define function getMerkleRoot() view returns (bytes32)
+#define function getTokenAddress() view returns (address)
+
+#define function isClaimed(uint256) view returns (bool)
+#define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
+
+/* Storage Slots */
+#define constant MERKLE_ROOT = FREE_STORAGE_POINTER()
+#define constant TOKEN_ADDR = FREE_STORAGE_POINTER()
+
+/* Methods */
+#define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
+    // Load value from storage.
+    [MERKLE_ROOT]       // [ptr]
+    sload               // [value]
+
+    // Store value in memory.
+    0x00 mstore
+
+    // Return value
+    0x20 0x00 return
+}
+
+#define macro GET_TOKEN_ADDR() = takes (0) returns (0) {
+    // Load value from storage.
+    [TOKEN_ADDR] sload
+    // Store value in memory.
+    0x00 mstore
+    // Return value
+    0x20 0x00 return
+}
+
+/* Reserved Macros */
+// constructor (address, merkleRoot)
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    // Copy the first argument into memory
+    0x20                        // [size] - byte size to copy
+    0x40 codesize sub           // [offset, size] - offset in the code to copy from
+    0x00                        // [mem, offset, size] - offset in memory to copy to
+    codecopy                    // []
+
+    // Store the first argument in storage
+    0x00 mload                  // [arg1]
+    [TOKEN_ADDR]                // [TOKEN_ADDR, arg1]
+    sstore                      // []
+
+    // Copy the second argument into memory
+    0x20                        // [size] - byte size to copy
+    0x20 codesize sub           // [offset, size] - offset in the code to copy from
+    0x00                        // [mem, offset, size] - offset in memory to copy to
+    codecopy                    // []
+
+    // Store the second argument in storage
+    0x00 mload                  // [arg2]
+    [MERKLE_ROOT]               // [CONSTRUCTOR_ARG_TWO, arg2]
+    sstore                      // []
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called.
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
+    dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
+
+    getMerkleRoot:
+        GET_MERKLE_ROOT()
+    getTokenAddress:
+        GET_TOKEN_ADDR()
+
+    0x00 0x00 revert
+}
