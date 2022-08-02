@@ -46,10 +46,7 @@
     // index / 256
     0x100 dup2 div              // [index, arg0]
 
-    // Generate mapping key
-    0x00 mstore                 // [arg0]
-    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
-    0x40 0x00 sha3              // [key(claimed[index]), arg0]
+    LOOKUP_MAPPING()            // [key(claimed[index]), arg0]
     
     // Load mapping key
     sload                       // [claimed[index], arg0]
@@ -75,10 +72,7 @@
     // index / 256
     0x100 dup2 div              // [index, arg0]
 
-    // Generate mapping key
-    0x00 mstore                 // [arg0]
-    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
-    0x40 0x00 sha3              // [key(claimed[index]), arg0]
+    LOOKUP_MAPPING()            // [key(claimed[index]), arg0]
     
     // Load mapping key
     dup1 sload                  // [claimed[index], key(claimed[index]), arg0]
@@ -94,6 +88,11 @@
     pop 0x0 0x0 return
 }
 
+#define macro CLAIM() = takes (0) returns (0) {
+
+}
+
+/* Utilities */
 // Input stack:          [condition, message_length, message]
 #define macro REQUIRE() = takes (3) returns (0) {
     continue jumpi        // [message_length, message]
@@ -108,6 +107,13 @@
 
     continue:
         pop               // []
+}
+
+// Input stack:         [index]
+#define macro LOOKUP_MAPPING() = takes (1) returns (0) {
+    0x00 mstore                 // []
+    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
+    0x40 0x00 sha3              // [key(claimed[index])]
 }
 
 /* Constructor */
@@ -143,6 +149,7 @@
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
     dup1 __FUNC_SIG(setClaimed) eq setClaimed jumpi
     dup1 __FUNC_SIG(isClaimed) eq isClaimed jumpi
+    dup1 __FUNC_SIG(claim) eq claim jumpi
 
     getMerkleRoot:
         GET_MERKLE_ROOT()
@@ -152,6 +159,8 @@
         __UTIL_SET_CLAIMED()
     isClaimed:
         IS_CLAIMED()
+    claim:
+        CLAIM()
 
     0x00 0x00 revert
 }
