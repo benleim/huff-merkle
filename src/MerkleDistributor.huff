@@ -4,7 +4,7 @@
 
 #define function isClaimed(uint256) view returns (bool)
 #define function setClaimed(uint256) nonpayable returns ()
-#define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
+#define function claim(uint256,address,uint256) nonpayable returns ()
 
 /* Storage Slots */
 #define constant CLAIMED_BIT_MAP_SLOT = FREE_STORAGE_POINTER()  // 0x00
@@ -54,7 +54,7 @@
 // Input stack:                 // [arg0]
 // Output stack:                // [isEqual]
 // @dev stores result in 0x00 to 0x20 memory slot
-#define macro __UTIL_IS_CLAIMED() = takes (1) returns (3) {
+#define macro __UTIL_IS_CLAIMED() = takes (1) returns (1) {
     // index / 256
     0x100 dup2 div               // [index]
 
@@ -94,14 +94,31 @@
     pop 0x0 0x0 return
 }
 
+#define macro __UTIL_TRANSFER() = takes (0) returns (0) {
+    // STATICCALL transfer()
+}
+
 #define macro CLAIM() = takes (0) returns (0) {
+    // Possible revert error msg
+    0x686f6c61206d756e646f 0x20 // [message_length, message]
+
     // Load first argument from calldata
-    0x04                        // [0x04]
-    calldataload                // [arg0]
+    0x04                        // [0x04, message_length, message]
+    calldataload                // [arg0, message_length, message]
 
-    // Required() message & length
+    // Required()
+    __UTIL_IS_CLAIMED()         // [isClaimed, message_length, message]
+    iszero                      // [!isClaimed, message_length, message]
+    REQUIRE()
 
-    __UTIL_IS_CLAIMED()         // [isEqual]
+    // Load other calldata arguments
+
+    // TODO: Verify merkle proof
+
+    // TODO: Mark it claimed & send the token
+    __UTIL_SET_CLAIMED()
+
+    0x0 0x0 return
 }
 
 /* Utilities */

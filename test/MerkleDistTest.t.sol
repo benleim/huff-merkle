@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/console2.sol";
 
-contract SimpleStoreTest is Test {
+contract MerkleDistributorTest is Test {
     address constant token = address(0x420);
     bytes32 constant merkleRoot = bytes32(uint256(0x520));
 
@@ -38,6 +38,12 @@ contract SimpleStoreTest is Test {
             assert(merkleDistributor.isClaimed(i));
         }
     }
+
+    /// @dev Ensure revert for claimed index
+    function testRevert() public {
+        merkleDistributor.setClaimed(100);
+        merkleDistributor.claim(100, address(this), 0);
+    }
 }
 
 interface MerkleDistributor {
@@ -46,4 +52,5 @@ interface MerkleDistributor {
 
     function isClaimed(uint256) external view returns (bool);
     function setClaimed(uint256) external;
+    function claim(uint256, address, uint256) external;
 }
