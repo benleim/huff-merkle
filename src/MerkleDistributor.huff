@@ -42,7 +42,18 @@
     // Load first argument from calldata
     0x04                        // [0x04]
     calldataload                // [arg0]
+    
+    // Utility macro
+    __UTIL_IS_CLAIMED()
 
+    // Return
+    0x20 0x00 return            // []
+}
+
+// Input stack:                 // [arg0]
+// Output stack:                // []
+// @dev stores result in 0x00 to 0x20 memory slot
+#define macro __UTIL_IS_CLAIMED() = takes (1) returns (0) {
     // index / 256
     0x100 dup2 div              // [index, arg0]
 
@@ -58,10 +69,7 @@
 
     // store result in memory
     0x0 mstore                  // [claimed[index], arg0]
-
-    // Cleanup
     pop pop
-    0x20 0x00 return            // []
 }
 
 #define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
