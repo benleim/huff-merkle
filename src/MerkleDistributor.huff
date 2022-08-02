@@ -11,8 +11,12 @@
 #define constant TOKEN_ADDR_SLOT = FREE_STORAGE_POINTER()       // 0x20
 #define constant MERKLE_ROOT_SLOT = FREE_STORAGE_POINTER()      // 0x40
 
-/* Methods */
+/* Errors */
+#define error TransferError(string)
+#define error ClaimedError(string)
+#define error ProofError(string)
 
+/* Methods */
 #define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
     // Load value from storage.
     [MERKLE_ROOT_SLOT]          // [ptr]
@@ -88,6 +92,22 @@
 
     // Clean-up
     pop 0x0 0x0 return
+}
+
+// Input stack:          [condition, message_length, message]
+#define macro REQUIRE() = takes (3) returns (0) {
+    continue jumpi        // [message_length, message]
+
+    __ERROR(ClaimedError) // [error_selector, message_length, message]
+    0x00 mstore           // [message_length, message]
+    0x20 0x04 mstore      // [message_length, message]
+    0x24 mstore           // [message]
+    0x44 mstore           // []
+
+    0x64 0x00 revert
+
+    continue:
+        pop               // []
 }
 
 /* Constructor */
