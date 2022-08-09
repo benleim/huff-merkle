@@ -94,9 +94,14 @@
     pop 0x0 0x0 return
 }
 
-#define macro __UTIL_TRANSFER() = takes (0) returns (0) {
+/// input stack:                [index, acct_addr, amonut]
+#define macro __UTIL_TRANSFER() = takes (3) returns (0) {
     // STATICCALL transfer()
     __FUNC_SIG(transfer) 0x0 mstore
+
+    // store args in memory
+    // 256 index, 160 acct, 256 amount
+
 
     // execute call.
     // return size is zero because we can fetch it after the call

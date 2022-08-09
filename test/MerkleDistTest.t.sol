@@ -5,9 +5,10 @@ import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/console2.sol";
+import "./ERC20.sol";
 
 contract MerkleDistributorTest is Test {
-    address constant token = address(0x420);
+    address token;
     bytes32 constant merkleRoot = bytes32(uint256(0x520));
 
     /// @dev Address of the SimpleStore contract.  
@@ -15,6 +16,9 @@ contract MerkleDistributorTest is Test {
 
     /// @dev Setup the testing environment.
     function setUp() public {
+        token = HuffDeployer
+            .deploy("TestERC20");
+
         address mdAddr = HuffDeployer
             .config()
             .with_args(bytes.concat(abi.encode(token), abi.encode(merkleRoot)))
@@ -23,11 +27,6 @@ contract MerkleDistributorTest is Test {
 
         assert(merkleDistributor.getTokenAddress() == token);
         assert(merkleDistributor.getMerkleRoot() == merkleRoot);
-    }
-
-    /// @dev Ensure constructor works properly
-    function test() public {
-        console.log("Test1");
     }
 
     /// @dev Ensure constructor works properly
@@ -43,6 +42,11 @@ contract MerkleDistributorTest is Test {
     function testRevert() public {
         merkleDistributor.claim(100, address(this), 0);
         assert(merkleDistributor.isClaimed(100));
+    }
+
+    /// @dev Ensure tokens transfer
+    function testClaimTransfer() public {
+        
     }
 }
 
