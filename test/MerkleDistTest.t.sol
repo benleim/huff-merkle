@@ -41,8 +41,8 @@ contract MerkleDistributorTest is Test {
 
     /// @dev Ensure revert for claimed index
     function testRevert() public {
-        merkleDistributor.setClaimed(100);
         merkleDistributor.claim(100, address(this), 0);
+        assert(merkleDistributor.isClaimed(100));
     }
 }
 

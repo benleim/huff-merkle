@@ -6,6 +6,9 @@
 #define function setClaimed(uint256) nonpayable returns ()
 #define function claim(uint256,address,uint256) nonpayable returns ()
 
+/* External Interface */
+#define function transfer(address,uint256) nonpayable returns (bool)
+
 /* Storage Slots */
 #define constant CLAIMED_BIT_MAP_SLOT = FREE_STORAGE_POINTER()  // 0x00
 #define constant TOKEN_ADDR_SLOT = FREE_STORAGE_POINTER()       // 0x20
@@ -40,8 +43,7 @@
 
 #define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
-    0x04                        // [0x04]
-    calldataload                // [arg0]
+    __UTIL_LOAD_ARG_0()
     
     // Utility macro
     __UTIL_IS_CLAIMED()         // [isEqual]
@@ -71,9 +73,7 @@
 }
 
 #define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
-    // Load first argument from calldata
-    0x04                        // [0x04]
-    calldataload                // [arg0]
+    __UTIL_LOAD_ARG_0()
 
     // index / 256
     0x100 dup2 div              // [index, arg0]
@@ -96,15 +96,43 @@
 
 #define macro __UTIL_TRANSFER() = takes (0) returns (0) {
     // STATICCALL transfer()
+    __FUNC_SIG(transfer) 0x0 mstore
+
+    // execute call.
+    // return size is zero because we can fetch it after the call
+    0x00                        // [ret_size]
+    0x00                        // [ret_offset, ret_size]
+    0x04                        // [args_size, ret_offset, ret_size]
+    0x1c                        // [args_offset, args_size, ret_offset, ret_size]
+    [GETTER_ADDR]               // [getter_addr, args_offset, args_size, ret_offset, ret_size]
+    gas                         // [gas, getter_addr, args_offset, args_size, ret_offset, ret_size]
+    staticcall                  // [successs]
+
+    // store returndata in memory
+    returndatasize              // [returndatasize, success]
+    0x00                        // [mem_offset, returndatasize, success]
+    0x00                        // [destOffset, mem_offset, returndatasize, success]
+    returndatacopy              // [success] // this stores the return data in memory
+
+    // return the returndata from memory to the msg.sender
+    returndatasize              // [returndatasize, success]
+    0x00                        // [mem_offset, returndatasize, success]
+    return
+}
+
+// Load first argument from calldata
+#define macro __UTIL_LOAD_ARG_0() = takes (0) returns (1) {
+    0x04                        // [0x04]
+    calldataload                // [arg0]
 }
 
 #define macro CLAIM() = takes (0) returns (0) {
+    // TODO: FIX THIS
     // Possible revert error msg
-    0x686f6c61206d756e646f 0x20 // [message_length, message]
+    0x4e6f7420656e6f7567682045746865722070726f76696465642e 0x1A // [message_length, message]
 
     // Load first argument from calldata
-    0x04                        // [0x04, message_length, message]
-    calldataload                // [arg0, message_length, message]
+    __UTIL_LOAD_ARG_0()         // [arg0, message_length, message]
 
     // Required()
     __UTIL_IS_CLAIMED()         // [isClaimed, message_length, message]
@@ -115,8 +143,12 @@
 
     // TODO: Verify merkle proof
 
-    // TODO: Mark it claimed & send the token
+    // TODO: Mark it claimed
+    __UTIL_LOAD_ARG_0()
     __UTIL_SET_CLAIMED()
+
+    // TODO: Send the token
+    STATICCALL
 
     0x0 0x0 return
 }
@@ -132,7 +164,7 @@
     0x24 mstore           // [message]
     0x44 mstore           // []
 
-    0x64 0x00 revert
+    0x00 0x00 revert
 
     continue:
         pop               // []
