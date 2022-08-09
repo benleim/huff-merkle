@@ -104,8 +104,8 @@
     0x00                        // [ret_offset, ret_size]
     0x04                        // [args_size, ret_offset, ret_size]
     0x1c                        // [args_offset, args_size, ret_offset, ret_size]
-    [GETTER_ADDR]               // [getter_addr, args_offset, args_size, ret_offset, ret_size]
-    gas                         // [gas, getter_addr, args_offset, args_size, ret_offset, ret_size]
+    [TOKEN_ADDR_SLOT] sload     // [token_addr, args_offset, args_size, ret_offset, ret_size]
+    gas                         // [gas, token_addr, args_offset, args_size, ret_offset, ret_size]
     staticcall                  // [successs]
 
     // store returndata in memory
@@ -148,7 +148,7 @@
     __UTIL_SET_CLAIMED()
 
     // TODO: Send the token
-    STATICCALL
+    __UTIL_TRANSFER()
 
     0x0 0x0 return
 }
