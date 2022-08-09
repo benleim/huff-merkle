@@ -72,6 +72,11 @@
     swap2 pop pop               // [isEqual]
 }
 
+#define macro SET_CLAIMED() = takes (0) returns (0) {
+    __UTIL_SET_CLAIMED()
+    0x0 0x0 return
+}
+
 #define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
     __UTIL_LOAD_ARG_0()
 
@@ -91,37 +96,37 @@
     swap1 sstore                // [arg0]
 
     // Clean-up
-    pop 0x0 0x0 return
+    pop
 }
 
-/// input stack:                [index, acct_addr, amonut]
+/// input stack:                [acct_addr, amount]
 #define macro __UTIL_TRANSFER() = takes (3) returns (0) {
     // STATICCALL transfer()
     __FUNC_SIG(transfer) 0x0 mstore
 
     // store args in memory
-    // 256 index, 160 acct, 256 amount
+    // address, uint256
+    0x20 mstore                 // [amount]
+    0x34 mstore                 // []
 
-
-    // execute call.
-    // return size is zero because we can fetch it after the call
+    // make call. return size is zero because we can fetch it after the call
     0x00                        // [ret_size]
     0x00                        // [ret_offset, ret_size]
-    0x04                        // [args_size, ret_offset, ret_size]
+    0x44                        // [args_size, ret_offset, ret_size]
     0x1c                        // [args_offset, args_size, ret_offset, ret_size]
-    [TOKEN_ADDR_SLOT] sload     // [token_addr, args_offset, args_size, ret_offset, ret_size]
-    gas                         // [gas, token_addr, args_offset, args_size, ret_offset, ret_size]
+    [TOKEN_ADDR_SLOT] sload     // [getter_addr, args_offset, args_size, ret_offset, ret_size]
+    gas                         // [gas, getter_addr, args_offset, args_size, ret_offset, ret_size]
     staticcall                  // [successs]
 
     // store returndata in memory
-    returndatasize              // [returndatasize, success]
-    0x00                        // [mem_offset, returndatasize, success]
-    0x00                        // [destOffset, mem_offset, returndatasize, success]
-    returndatacopy              // [success] // this stores the return data in memory
+    returndatasize // [returndatasize, success]
+    0x00           // [mem_offset, returndatasize, success]
+    0x00           // [destOffset, mem_offset, returndatasize, success]
+    returndatacopy // [success] // this stores the return data in memory
 
     // return the returndata from memory to the msg.sender
-    returndatasize              // [returndatasize, success]
-    0x00                        // [mem_offset, returndatasize, success]
+    returndatasize // [returndatasize, success]
+    0x00           // [mem_offset, returndatasize, success]
     return
 }
 
@@ -145,6 +150,8 @@
     REQUIRE()
 
     // Load other calldata arguments
+    0x04 calldataload           // [arg0]
+    0x24 calldataload           // [arg1, arg0]
 
     // TODO: Verify merkle proof
 
@@ -223,7 +230,7 @@
     getTokenAddress:
         GET_TOKEN_ADDR()
     setClaimed:
-        __UTIL_SET_CLAIMED()
+        SET_CLAIMED()
     isClaimed:
         IS_CLAIMED()
     claim:
