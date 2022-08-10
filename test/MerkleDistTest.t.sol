@@ -4,11 +4,9 @@ pragma solidity ^0.8.15;
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "forge-std/console2.sol";
 import "./TestERC20.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 
 contract MerkleDistributorTest is Test {
     IERC20 token;
@@ -19,8 +17,10 @@ contract MerkleDistributorTest is Test {
 
     /// @dev Setup the testing environment.
     function setUp() public {
+        // Deploy test erc20 token
         token = new TestERC20();
 
+        // Deploy MerkleDistributor
         address mdAddr = HuffDeployer
             .config()
             .with_args(bytes.concat(abi.encode(token), abi.encode(merkleRoot)))
@@ -31,6 +31,7 @@ contract MerkleDistributorTest is Test {
         uint currBalance = token.balanceOf(address(this));
         token.transfer(address(merkleDistributor), currBalance);
 
+        // Confirm constructor variables set properly
         assert(merkleDistributor.getTokenAddress() == address(token));
         assert(merkleDistributor.getMerkleRoot() == merkleRoot);
     }
@@ -52,10 +53,26 @@ contract MerkleDistributorTest is Test {
 
     /// @dev Ensure tokens transfer
     function testClaimTransfer() public {
+        uint transferAmount = 100;
         uint balanceBefore = token.balanceOf(address(this));
-        merkleDistributor.claim(10_000, address(this), 100);
+        merkleDistributor.claim(10_000, address(this), transferAmount);
         uint balanceAfter = token.balanceOf(address(this));
-        assert(balanceBefore != balanceAfter);
+        assert(balanceBefore + transferAmount == balanceAfter);
+    }
+
+    /// @dev Ensure cannot claim twice
+    function testClaimTwice() public {
+        uint transferAmount = 1000;
+
+        // Claim initial index
+        uint balanceBefore = token.balanceOf(address(this));
+        merkleDistributor.claim(10_100, address(this), transferAmount);
+        uint balanceAfter = token.balanceOf(address(this));
+        assert(balanceBefore + transferAmount == balanceAfter);
+        
+        // Attempt to claim same index again
+        vm.expectRevert();
+        merkleDistributor.claim(10_100, address(this), transferAmount);
     }
 }
 
