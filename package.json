@@ -1,5 +1,5 @@
 {
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.7.2"
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.7.3"
   }
 }
