@@ -1,10 +1,17 @@
+/// @title ERC1155
+/// @author Ben Leimberger <https://github.com/benleim>
+/// @notice Minimal, gas efficient Merkle Distributor implementation
+
+/* Imports */
+#include "./MerkleProofLib.huff"
+
 /* Interface */
 #define function getMerkleRoot() view returns (bytes32)
 #define function getTokenAddress() view returns (address)
 
 #define function isClaimed(uint256) view returns (bool)
 #define function setClaimed(uint256) nonpayable returns ()
-#define function claim(uint256,address,uint256) nonpayable returns ()
+#define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
 
 /* External Interface */
 #define function transfer(address,uint256) nonpayable returns (bool)
@@ -152,19 +159,40 @@
 }
 
 #define macro CLAIM() = takes (0) returns (0) {
+    // Preload merkle root
+    [MERKLE_ROOT_SLOT] sload                // [root]
+
+    // Load arguments from calldata
+    0x44 calldataload                       // [amount, root]
+    0x24 calldataload __UTIL_ADDRESS_MASK() // [account, amount, root]
+    0x04 calldataload                       // [index, account, amount, root]
+
     // TODO: FIX THIS
     // Possible revert error msg
-    0x4e6f7420656e6f7567682045746865722070726f76696465642e 0x1A // [message_length, message]
-
-    // Load first argument from calldata
-    __UTIL_LOAD_ARG_0()         // [arg0, message_length, message]
+    0x4e6f7420656e6f7567682045746865722070726f76696465642e 0x1A // [message_length, message, index, account, amount, root]
+    dup3                        // [index, message_length, message, index, account, amount, root]
 
     // Required()
-    __UTIL_IS_CLAIMED()         // [isClaimed, message_length, message]
-    iszero                      // [!isClaimed, message_length, message]
-    REQUIRE()
+    __UTIL_IS_CLAIMED()         // [isClaimed, message_length, message, index, account, amount, root]
+    iszero                      // [!isClaimed, message_length, message, index, account, amount, root]
+    REQUIRE()                   // [index, account, amount, root]
+    
+    // EncodePacked
+    // [ 32 bytes | 20 bytes | 32 bytes ] = 84 bytes
+    0x00 mstore                 // [account, amount, root]
+    0x60 shl                    // [account << 12, amount, root]
+    0x20 mstore                 // [amount, root]
+    0x34 mstore                 // [root]
+    0x54 0x00 sha3              // [leaf, root]
 
-    // TODO: Verify merkle proof
+    // Verify merkle proof
+    0x64 calldataload 0x4 add   // [&proof_length, leaf, root]
+
+    // Required()
+    VERIFY_PROOF()              // [isProven]
+    0x4e6f7420656e6f7567682045746865722070726f76696465642e 0x1A     // [message_length, message, isProven]
+    dup3                        // [isProven, message_length, message]
+    REQUIRE()                   // []
 
     // Mark it claimed
     __UTIL_LOAD_ARG_0()
@@ -195,7 +223,7 @@
     0x00 0x00 revert
 
     continue:
-        pop               // []
+        pop pop           // []
 }
 
 /* Constructor */
@@ -225,8 +253,8 @@
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    // Identify which function is being called.
     0x00 calldataload 0xE0 shr
+
     dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
     dup1 __FUNC_SIG(setClaimed) eq setClaimed jumpi
