@@ -40,6 +40,19 @@ test
 └─ MerkleDistTest.t — MerkleDistributorTests
 ```
 
+## Contract ABI
+```solidity
+// Global Variables
+address public immutable override token;
+bytes32 public immutable override merkleRoot;
+mapping(uint256 => uint256) private claimedBitMap;
+
+// Functions
+function getMerkleRoot() external view returns (bytes32);
+function getTokenAddress() external view returns (address);
+function isClaimed(uint256 index) external view returns (bool);
+function claim(uint256 index, address account, uint256 amount, bytes32[] calldata proof) external;
+```
 
 ## License
 
