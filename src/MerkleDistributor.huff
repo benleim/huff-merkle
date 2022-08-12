@@ -1,4 +1,4 @@
-/// @title ERC1155
+/// @title Merkle Distributor
 /// @author Ben Leimberger <https://github.com/benleim>
 /// @notice Minimal, gas efficient Merkle Distributor implementation
 
@@ -6,12 +6,13 @@
 #include "./MerkleProofLib.huff"
 
 /* Interface */
+/* Stateful Functions */
+#define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
+
+/* View Functions */
 #define function getMerkleRoot() view returns (bytes32)
 #define function getTokenAddress() view returns (address)
-
 #define function isClaimed(uint256) view returns (bool)
-#define function setClaimed(uint256) nonpayable returns ()
-#define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
 
 /* External Interface */
 #define function transfer(address,uint256) nonpayable returns (bool)
@@ -27,6 +28,13 @@
 #define error ProofError(string)
 
 /* Methods */
+
+/** Get Merkle Root
+ * @notice Entry point for: getMerkleRoot()
+ * @dev Fetches merkle root from storage slot
+ * @param {calldata} []
+ * @return {return} [bytes32 root]
+ */
 #define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
     // Load value from storage.
     [MERKLE_ROOT_SLOT]          // [ptr]
@@ -48,6 +56,13 @@
     0x20 0x00 return
 }
 
+
+/** Is Claimed
+ * @notice Entry point for: isClaimed(uint256)
+ * @dev Check if index is claimed
+ * @param {calldata} [uint256 index]
+ * @return {return} [bytes32 root]
+ */
 #define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
     __UTIL_LOAD_ARG_0()
@@ -158,6 +173,13 @@
     calldataload                // [arg0]
 }
 
+
+/** Claim
+ * @notice Entry point for: claim(uint256,address,uint256,bytes[])
+ * @dev Claim distribution with proof
+ * @param {calldata} [uint256 index, address account, uint256 amount, bytes[] proof]
+ * @return {return} []
+ */
 #define macro CLAIM() = takes (0) returns (0) {
     // Preload merkle root
     [MERKLE_ROOT_SLOT] sload                // [root]
@@ -257,7 +279,6 @@
 
     dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
-    dup1 __FUNC_SIG(setClaimed) eq setClaimed jumpi
     dup1 __FUNC_SIG(isClaimed) eq isClaimed jumpi
     dup1 __FUNC_SIG(claim) eq claim jumpi
 
@@ -265,8 +286,6 @@
         GET_MERKLE_ROOT()
     getTokenAddress:
         GET_TOKEN_ADDR()
-    setClaimed:
-        SET_CLAIMED()
     isClaimed:
         IS_CLAIMED()
     claim:

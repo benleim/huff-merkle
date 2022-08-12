@@ -4,7 +4,7 @@ pragma solidity ^0.8.15;
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import "./TestERC20.sol";
+import "./utils/TestERC20.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -56,15 +56,6 @@ contract MerkleDistributorTest is Test {
         assert(merkleDistributor.getMerkleRoot() == merkleRoot);
     }
 
-    /// @dev Ensure constructor works properly
-    function testSetClaimed() public {
-        for (uint i; i < 1_000; i++) {
-            assert(!merkleDistributor.isClaimed(i));
-            merkleDistributor.setClaimed(i);
-            assert(merkleDistributor.isClaimed(i));
-        }
-    }
-
     /// @dev Ensure revert for claimed index
     function testRevert() public {
         bytes32[] memory proof4 = new bytes32[](2);
@@ -105,7 +96,7 @@ contract MerkleDistributorTest is Test {
         merkleDistributor.claim(index2, user2, amount2, proof2);
     }
 
-    function testBad() public {
+    function testClaimOnce() public {
         bytes32[] memory proof1 = new bytes32[](2);
         proof1[0] = 0x3fdbb9ff8c87c843885788bfb3023d1351a05efb9a5a4dfd5332081fe8be4c31;
         proof1[1] = 0x491dec713e1401118c9b1a82bb2fc861fe3500d34ee49e5ab56f514fded22de3;
@@ -116,8 +107,6 @@ contract MerkleDistributorTest is Test {
 interface MerkleDistributor {
     function getMerkleRoot() external view returns (bytes32);
     function getTokenAddress() external view returns (address);
-
     function isClaimed(uint256) external view returns (bool);
-    function setClaimed(uint256) external;
     function claim(uint256, address, uint256, bytes32[] calldata) external;
 }

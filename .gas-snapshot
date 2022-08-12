@@ -1,0 +1,5 @@
+MerkleDistributorTest:testClaimOnce() (gas: 72075)
+MerkleDistributorTest:testClaimTransfer() (gas: 76571)
+MerkleDistributorTest:testClaimTwice() (gas: 81171)
+MerkleDistributorTest:testRevert() (gas: 73076)
+MerkleDistributorTest:testSetClaimed() (gas: 2854222)
