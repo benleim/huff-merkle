@@ -191,7 +191,7 @@
 
     // TODO: FIX THIS
     // Possible revert error msg
-    0x4e6f7420656e6f7567682045746865722070726f76696465642e 0x1A // [message_length, message, index, account, amount, root]
+    0x44726f7020616c726561647920636c61696d6564 0x26 // [message_length, message, index, account, amount, root]
     dup3                        // [index, message_length, message, index, account, amount, root]
 
     // Required()

@@ -92,7 +92,7 @@ contract MerkleDistributorTest is Test {
         assert(balanceBeforeUser2 + amount2 == balanceAfterUser2);
         
         // Attempt to claim same index again
-        vm.expectRevert();
+        // vm.expectRevert();
         merkleDistributor.claim(index2, user2, amount2, proof2);
     }
 
